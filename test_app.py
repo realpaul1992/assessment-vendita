@@ -179,7 +179,6 @@ if st.button("Genera Grafici"):
     # Crea la cartella specifica del cliente se non esiste
     os.makedirs(cliente_dir, exist_ok=True)
 
-
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
     for area in aree:
         aree_files[area].savefig(os.path.join(cliente_dir, f"grafico_{area}.png"), dpi=300, bbox_inches='tight')
