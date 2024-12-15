@@ -5,6 +5,7 @@ import os
 from docx import Document
 from docx.shared import Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from io import BytesIO
 
 # Mappatura dei valori per la scala 1-5
 scala_risposte = {
@@ -149,26 +150,7 @@ def crea_radar(labels, values, title, max_score=5):
     return fig
 
 if st.button("Genera Grafici"):
-    medie_aree = {}
-    for area in aree:
-        media = np.mean(punteggi_aree[area])
-        controllo = controlli_aree[area]
-        if media >=4 and controllo <=2:
-            media = max(1, media - 1)
-            st.warning(f"L'area '{area}' aveva media {np.mean(punteggi_aree[area]):.2f}, ma a causa della bassa risposta di controllo ({controllo}), il punteggio è stato ridotto a {media:.2f}.")
-        medie_aree[area] = media
-
-    st.header("Risultati Generali")
-    fig_generale = crea_radar(aree, [medie_aree[a] for a in aree], "Analisi Reparto Commerciale")
-    st.pyplot(fig_generale)
-
-    st.header("Dettaglio per Area")
-    aree_files = {}
-    for area in aree:
-        fig_area = crea_radar(domande[area]["principali"], punteggi_aree[area], area)
-        st.pyplot(fig_area)
-        aree_files[area] = fig_area
-
+    # Cartella per salvare i file
     base_dir = "Programma Test vendita"
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
@@ -177,81 +159,37 @@ if st.button("Genera Grafici"):
     if not os.path.exists(cliente_dir):
         os.makedirs(cliente_dir)
 
+    # Generazione dei grafici
+    medie_aree = {}
+    for area in aree:
+        media = np.mean(punteggi_aree[area])
+        controllo = controlli_aree[area]
+        if media >= 4 and controllo <= 2:
+            media = max(1, media - 1)
+            st.warning(f"L'area '{area}' aveva media {np.mean(punteggi_aree[area]):.2f}, ma a causa della bassa risposta di controllo ({controllo}), il punteggio è stato ridotto a {media:.2f}.")
+        medie_aree[area] = media
+
+    st.header("Risultati Generali")
+    fig_generale = crea_radar(aree, [medie_aree[a] for a in aree], "Analisi Reparto Commerciale")
+    st.pyplot(fig_generale)
+
+    # Salvataggio grafici
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
-    for area in aree:
-        aree_files[area].savefig(os.path.join(cliente_dir, f"grafico_{area}.png"), dpi=300, bbox_inches='tight')
 
+    # Generazione del documento
     doc = Document()
-
-    # Percorso assoluto del logo (assicurarsi che esista)
-    logo_path = "Logo-Sales-Flow-payoff.png"
-
-    section = doc.sections[0]
-    header = section.header
-    header_par = header.paragraphs[0]
-    header_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = header_par.add_run()
-    r.add_picture(logo_path, width=Inches(1.5))
-
-    doc.add_heading('SALES ASSESSMENT', level=1)
-
-    p_cliente = doc.add_paragraph()
-    p_cliente.add_run("Report Analitico del Test di Vendita di ").bold = False
-    run_cliente = p_cliente.add_run(nome_cliente)
-    run_cliente.bold = False
-
-    p_azienda = doc.add_paragraph()
-    p_azienda.add_run("Azienda: ").bold = True
-    run_azienda = p_azienda.add_run(nome_azienda)
-    run_azienda.bold = False
-
-    doc.add_paragraph("Questo documento fornisce un'analisi dettagliata della struttura commerciale dell'azienda, evidenziando punti di forza e aree di miglioramento.")
-
-    # Nota modificata
-    p_nota = doc.add_paragraph()
-    run_nota = p_nota.add_run("Nota: ")
-    run_nota.bold = True
-    run_nota.font.color.rgb = RGBColor(0xFF,0x00,0x00)
-    p_nota.add_run("Per garantire che il lavoro di ricerca venditori che svolgerà RecruitFlow funzioni e per garantire che il venditore trovato riesca ad effettuare il proprio lavoro in modo efficace è essenziale che le seguenti aree chiave raggiungano almeno l'85%:")
-
-    doc.add_paragraph("- Visione e Strategia di Vendita")
-    doc.add_paragraph("- Processi di Vendita")
-    doc.add_paragraph("- Script e Protocolli di Vendita")
-    doc.add_paragraph("- Formazione e Sviluppo del Team di Vendita")
-
-    footer = section.footer
-    footer_par = footer.paragraphs[0]
-    footer_par.text = "Sales Assessment™ SalesFlow - salesflow.it"
-    footer_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-    doc.add_page_break()
-    doc.add_heading('Analisi Reparto Commerciale', level=2)
-    doc.add_picture(os.path.join(cliente_dir, "grafico_generale.png"), width=Inches(6))
-
-    for area in aree:
-        doc.add_page_break()
-        doc.add_heading(area, level=2)
-        doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
-
     doc_name = f"report_assessment_{nome_cliente}.docx"
-    import streamlit as st
-from io import BytesIO
+    doc_path = os.path.join(cliente_dir, doc_name)
+    doc.save(doc_path)
 
-# Salva il documento Word
-doc_name = f"report_assessment_{nome_cliente}.docx"
-doc_path = os.path.join(cliente_dir, doc_name)
-doc.save(doc_path)
+    with open(doc_path, "rb") as file:
+        word_file = file.read()
 
-# Leggi il file Word in modalità binaria per il download
-with open(doc_path, "rb") as file:
-    word_file = file.read()
+    st.download_button(
+        label=":inbox_tray: Scarica il Report Word",
+        data=word_file,
+        file_name=doc_name,
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
 
-# Aggiungi il pulsante di download
-st.download_button(
-    label=":inbox_tray: Scarica il Report Word",
-    data=word_file,
-    file_name=doc_name,
-    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-)
-
-st.success(f"Il report è stato generato con successo! Puoi scaricarlo usando il pulsante sopra.")
+    st.success("Report generato con successo!")
