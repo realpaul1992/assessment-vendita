@@ -184,7 +184,7 @@ if st.button("Genera Grafici"):
     doc = Document()
 
     # Percorso assoluto del logo (assicurarsi che esista)
-    logo_path = "/Users/paolopatelli/Documents/Programma Test vendita/Logo-Sales-Flow-payoff.png"
+    logo_path = "Logo-Sales-Flow-payoff.png"
 
     section = doc.sections[0]
     header = section.header
