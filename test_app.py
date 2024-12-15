@@ -96,10 +96,16 @@ st.write("Compila le seguenti domande per ogni area, poi clicca su 'Genera Grafi
 
 import re
 
-nome_cliente = st.text_input("Nome del Cliente:", "Francesco Ramundo")
-nome_cliente = re.sub(r'[^\w\-_. ]', '_', nome_cliente).strip()
+# Input utente con pulizia per nome_cliente
+nome_cliente_input = st.text_input("Nome del Cliente:", "Francesco Ramundo")
+nome_cliente = re.sub(r'[^\w\-_. ]', '_', nome_cliente_input).strip()
 
 nome_azienda = st.text_input("Nome dell'Azienda:", "rarosrl.com")
+
+# Assicurati che nome_cliente non sia vuoto
+if not nome_cliente:
+    st.error("Il nome del cliente non può essere vuoto. Inserisci un nome valido.")
+    st.stop()
 
 punteggi_aree = {}
 controlli_aree = {}
@@ -176,12 +182,13 @@ if st.button("Genera Grafici"):
     base_dir = "Programma Test vendita"
     cliente_dir = os.path.join(base_dir, nome_cliente)
 
-    # Crea la cartella base se non esiste
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
+    # Crea le cartelle se non esistono
+    try:
+        os.makedirs(cliente_dir, exist_ok=True)
+    except Exception as e:
+        st.error(f"Errore nella creazione delle cartelle: {e}")
+        st.stop()
 
-    # Crea la cartella specifica del cliente se non esiste
-    os.makedirs(cliente_dir, exist_ok=True)
 
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
     for area in aree:
@@ -240,12 +247,8 @@ if st.button("Genera Grafici"):
         doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
 
     doc_name = f"report_assessment_{nome_cliente}.docx"
-    import streamlit as st
-from io import BytesIO
+    doc_path = os.path.join(cliente_dir, doc_name)
 
-# Salva il documento Word
-doc_name = f"report_assessment_{nome_cliente}.docx"
-doc_path = os.path.join(cliente_dir, doc_name)
 doc.save(doc_path)
 
 # Leggi il file Word in modalità binaria per il download
