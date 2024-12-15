@@ -174,7 +174,7 @@ if st.button("Genera Grafici"):
 
     # Crea la cartella base se non esiste
     if not os.path.exists(base_dir):
-    os.makedirs(base_dir)
+        os.makedirs(base_dir)
 
     # Crea la cartella specifica del cliente se non esiste
     os.makedirs(cliente_dir, exist_ok=True)
