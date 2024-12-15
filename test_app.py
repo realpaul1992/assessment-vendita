@@ -180,7 +180,7 @@ if st.button("Genera Grafici"):
         aree_files[area] = fig_area
 
     base_dir = "Programma Test vendita"
-    cliente_dir = os.path.join(base_dir, nome_cliente)
+    cliente_dir = os.path.join(base_dir, nome_cliente.strip())
 
     # Crea le cartelle se non esistono
     try:
