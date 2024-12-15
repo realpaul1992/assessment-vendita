@@ -180,15 +180,11 @@ if st.button("Genera Grafici"):
         aree_files[area] = fig_area
 
     base_dir = "Programma Test vendita"
-    cliente_dir = os.path.join(base_dir, nome_cliente_pulito.strip())
 
-    # Crea le cartelle se non esistono
-    try:
-        os.makedirs(cliente_dir, exist_ok=True)
-    except Exception as e:
-        st.error(f"Errore nella creazione delle cartelle: {e}")
-        st.stop()
-
+    # Controllo e creazione della cartella base_dir se non esiste
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+        st.write(f"Cartella base_dir creata: {base_dir}")  # Debug
 
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
     for area in aree:
@@ -247,6 +243,9 @@ if st.button("Genera Grafici"):
         doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
 
     import re
+
+st.write(f"Debug - base_dir: {base_dir}")
+st.write(f"Debug - nome_cliente_pulito: {nome_cliente_pulito.strip()}")
 
 cliente_dir = os.path.join(base_dir, nome_cliente_pulito.strip())  # Questa riga deve essere confermata corretta sopra
 
