@@ -95,7 +95,7 @@ st.title("Assessment Reparto Commerciale")
 st.write("Compila le seguenti domande per ogni area, poi clicca su 'Genera Grafici' per visualizzare i risultati.")
 
 nome_cliente = st.text_input("Nome del Cliente:", "Francesco Ramundo")
-nome_azienda = st.text_input("Nome dell'Azienda:", "rarosrl.com")
+nome_cliente = re.sub(r'[^\w\-_. ]', '_', nome_cliente).strip()
 
 punteggi_aree = {}
 controlli_aree = {}
