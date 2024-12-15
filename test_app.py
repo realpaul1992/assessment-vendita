@@ -248,8 +248,11 @@ if st.button("Genera Grafici"):
 
     import re
 
-# Pulizia del nome_cliente
-doc_name = re.sub(r'[^\w\-_. ]', '_', f"report_assessment_{nome_cliente}.docx")
+cliente_dir = os.path.join(base_dir, nome_cliente)  # Questa riga deve essere confermata corretta sopra
+
+# Pulizia finale del nome file
+doc_name = f"report_assessment_{nome_cliente}.docx"
+doc_name = re.sub(r'[^\w\-_. ]', '_', doc_name).strip()  # Ulteriore sicurezza
 doc_path = os.path.join(cliente_dir, doc_name)
 
 # Crea la cartella specifica se non esiste (ulteriore sicurezza)
