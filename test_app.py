@@ -98,12 +98,12 @@ import re
 
 # Input utente con pulizia per nome_cliente
 nome_cliente_input = st.text_input("Nome del Cliente:", "Francesco Ramundo")
-nome_cliente = re.sub(r'[^\w\-_. ]', '_', nome_cliente_input).strip()
+nome_cliente_pulito = re.sub(r'[^\w\-_. ]', '_', nome_cliente_input).strip()
 
 nome_azienda = st.text_input("Nome dell'Azienda:", "rarosrl.com")
 
 # Assicurati che nome_cliente non sia vuoto
-if not nome_cliente:
+if not nome_cliente_pulito:
     st.error("Il nome del cliente non può essere vuoto. Inserisci un nome valido.")
     st.stop()
 
@@ -180,7 +180,7 @@ if st.button("Genera Grafici"):
         aree_files[area] = fig_area
 
     base_dir = "Programma Test vendita"
-    cliente_dir = os.path.join(base_dir, nome_cliente.strip())
+    cliente_dir = os.path.join(base_dir, nome_cliente_pulito.strip())
 
     # Crea le cartelle se non esistono
     try:
@@ -210,7 +210,7 @@ if st.button("Genera Grafici"):
 
     p_cliente = doc.add_paragraph()
     p_cliente.add_run("Report Analitico del Test di Vendita di ").bold = False
-    run_cliente = p_cliente.add_run(nome_cliente)
+    run_cliente = p_cliente.add_run(nome_cliente_pulito)
     run_cliente.bold = False
 
     p_azienda = doc.add_paragraph()
@@ -248,10 +248,10 @@ if st.button("Genera Grafici"):
 
     import re
 
-cliente_dir = os.path.join(base_dir, nome_cliente)  # Questa riga deve essere confermata corretta sopra
+cliente_dir = os.path.join(base_dir, nome_cliente_pulito.strip())  # Questa riga deve essere confermata corretta sopra
 
 # Pulizia finale del nome file
-doc_name = f"report_assessment_{nome_cliente}.docx"
+doc_name = f"report_assessment_{nome_cliente_pulito}.docx"
 doc_name = re.sub(r'[^\w\-_. ]', '_', doc_name).strip()  # Ulteriore sicurezza
 doc_path = os.path.join(cliente_dir, doc_name)
 
