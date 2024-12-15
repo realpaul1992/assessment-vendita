@@ -170,14 +170,14 @@ if st.button("Genera Grafici"):
         aree_files[area] = fig_area
 
     base_dir = "Programma Test vendita"
-cliente_dir = os.path.join(base_dir, nome_cliente)
+    cliente_dir = os.path.join(base_dir, nome_cliente)
 
-# Crea la cartella base se non esiste
-if not os.path.exists(base_dir):
+    # Crea la cartella base se non esiste
+    if not os.path.exists(base_dir):
     os.makedirs(base_dir)
 
-# Crea la cartella specifica del cliente se non esiste
-os.makedirs(cliente_dir, exist_ok=True)
+    # Crea la cartella specifica del cliente se non esiste
+    os.makedirs(cliente_dir, exist_ok=True)
 
 
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
