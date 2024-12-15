@@ -234,4 +234,24 @@ if st.button("Genera Grafici"):
         doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
 
     doc_name = f"report_assessment_{nome_cliente}.docx"
-    doc.save(os.path.join(cliente_dir, doc_name))
+    import streamlit as st
+from io import BytesIO
+
+# Salva il documento Word
+doc_name = f"report_assessment_{nome_cliente}.docx"
+doc_path = os.path.join(cliente_dir, doc_name)
+doc.save(doc_path)
+
+# Leggi il file Word in modalità binaria per il download
+with open(doc_path, "rb") as file:
+    word_file = file.read()
+
+# Aggiungi il pulsante di download
+st.download_button(
+    label="📥 Scarica il Report Word",
+    data=word_file,
+    file_name=doc_name,
+    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+)
+
+st.success(f"Il report è stato generato con successo! Puoi scaricarlo usando il pulsante sopra.")
