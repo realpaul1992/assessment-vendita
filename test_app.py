@@ -94,18 +94,8 @@ domande = {
 st.title("Assessment Reparto Commerciale")
 st.write("Compila le seguenti domande per ogni area, poi clicca su 'Genera Grafici' per visualizzare i risultati.")
 
-import re
-
-# Input utente con pulizia per nome_cliente
-nome_cliente_input = st.text_input("Nome del Cliente:", "Francesco Ramundo")
-nome_cliente_pulito = re.sub(r'[^\w\-_. ]', '_', nome_cliente_input).strip()
-
+nome_cliente = st.text_input("Nome del Cliente:", "Francesco Ramundo")
 nome_azienda = st.text_input("Nome dell'Azienda:", "rarosrl.com")
-
-# Assicurati che nome_cliente non sia vuoto
-if not nome_cliente_pulito:
-    st.error("Il nome del cliente non può essere vuoto. Inserisci un nome valido.")
-    st.stop()
 
 punteggi_aree = {}
 controlli_aree = {}
@@ -180,11 +170,14 @@ if st.button("Genera Grafici"):
         aree_files[area] = fig_area
 
     base_dir = "Programma Test vendita"
+    cliente_dir = os.path.join(base_dir, nome_cliente)
 
-    # Controllo e creazione della cartella base_dir se non esiste
+    # Crea la cartella base se non esiste
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
-        st.write(f"Cartella base_dir creata: {base_dir}")  # Debug
+
+    # Crea la cartella specifica del cliente se non esiste
+    os.makedirs(cliente_dir, exist_ok=True)
 
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
     for area in aree:
@@ -206,7 +199,7 @@ if st.button("Genera Grafici"):
 
     p_cliente = doc.add_paragraph()
     p_cliente.add_run("Report Analitico del Test di Vendita di ").bold = False
-    run_cliente = p_cliente.add_run(nome_cliente_pulito)
+    run_cliente = p_cliente.add_run(nome_cliente)
     run_cliente.bold = False
 
     p_azienda = doc.add_paragraph()
@@ -242,28 +235,14 @@ if st.button("Genera Grafici"):
         doc.add_heading(area, level=2)
         doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
 
-    import re
+    doc_name = f"report_assessment_{nome_cliente}.docx"
+    import streamlit as st
+from io import BytesIO
 
-st.write(f"Debug - base_dir: {base_dir}")
-st.write(f"Debug - nome_cliente_pulito: {nome_cliente_pulito.strip()}")
-
-cliente_dir = os.path.join(base_dir, nome_cliente_pulito.strip())  # Questa riga deve essere confermata corretta sopra
-
-# Pulizia finale del nome file
-doc_name = f"report_assessment_{nome_cliente_pulito}.docx"
-doc_name = re.sub(r'[^\w\-_. ]', '_', doc_name).strip()  # Ulteriore sicurezza
+# Salva il documento Word
+doc_name = f"report_assessment_{nome_cliente}.docx"
 doc_path = os.path.join(cliente_dir, doc_name)
-
-# Crea la cartella specifica se non esiste (ulteriore sicurezza)
-if not os.path.exists(cliente_dir):
-    os.makedirs(cliente_dir, exist_ok=True)
-
-# Salva il documento
-try:
-    doc.save(doc_path)
-except Exception as e:
-    st.error(f"Errore nel salvataggio del file Word: {e}")
-    st.stop()
+doc.save(doc_path)
 
 # Leggi il file Word in modalità binaria per il download
 with open(doc_path, "rb") as file:
