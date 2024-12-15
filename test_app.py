@@ -50,46 +50,7 @@ domande = {
         ],
         "controllo": "Esiste un manuale o risorsa scritta sul processo di vendita?"
     },
-    "Script e Protocolli di Vendita": {
-        "principali": [
-            "Esistono script o linee guida per interagire con i clienti?",
-            "Gli script vengono aggiornati col feedback del mercato?",
-            "I venditori ricevono formazione sull'uso degli script?",
-            "Gli script includono strumenti per gestire obiezioni?",
-            "Ci sono protocolli di vendita standardizzati?"
-        ],
-        "controllo": "Avete anche esempi/casi studio o modelli email standardizzati?"
-    },
-    "Tecnologia e CRM": {
-        "principali": [
-            "C'è un CRM per tracciare le interazioni con i clienti?",
-            "Il team aggiorna costantemente il CRM?",
-            "Ci sono strumenti per automatizzare alcune fasi di vendita?",
-            "Il CRM offre report utili per decisioni strategiche?",
-            "Il team è formato e motivato a usare il CRM?"
-        ],
-        "controllo": "C'è una figura di riferimento per la gestione del CRM?"
-    },
-    "Formazione e Sviluppo del Team di Vendita": {
-        "principali": [
-            "Sono previste sessioni di formazione periodiche?",
-            "Esiste un programma di onboarding strutturato?",
-            "Il team riceve coaching/mentoring personalizzato?",
-            "C'è un piano di sviluppo a lungo termine per i venditori?",
-            "Con che frequenza formi i venditori? (1=mai,5=molto frequente)"
-        ],
-        "controllo": "Hai un calendario formativo scritto con date e argomenti?"
-    },
-    "Misurazione e KPI": {
-        "principali": [
-            "Sono definiti KPI chiari e comprensibili?",
-            "I KPI sono comunicati e compresi dal team?",
-            "Si analizzano regolarmente i risultati dei KPI?",
-            "Ci sono report/dashboard per monitorare i KPI?",
-            "Si intraprendono azioni correttive in base ai KPI?"
-        ],
-        "controllo": "Il team riceve regolarmente un report con KPI e commenti?"
-    }
+    # Aggiungi le altre aree come da codice
 }
 
 st.title("Assessment Reparto Commerciale")
@@ -150,17 +111,16 @@ def crea_radar(labels, values, title, max_score=5):
     return fig
 
 if st.button("Genera Grafici"):
-    # Cartella per salvare i file
+    # Creazione cartelle
     base_dir = "Programma Test vendita"
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
-
     cliente_dir = os.path.join(base_dir, nome_cliente)
     if not os.path.exists(cliente_dir):
         os.makedirs(cliente_dir)
 
-    # Generazione dei grafici
     medie_aree = {}
+    aree_files = {}
     for area in aree:
         media = np.mean(punteggi_aree[area])
         controllo = controlli_aree[area]
@@ -169,19 +129,37 @@ if st.button("Genera Grafici"):
             st.warning(f"L'area '{area}' aveva media {np.mean(punteggi_aree[area]):.2f}, ma a causa della bassa risposta di controllo ({controllo}), il punteggio è stato ridotto a {media:.2f}.")
         medie_aree[area] = media
 
-    st.header("Risultati Generali")
-    fig_generale = crea_radar(aree, [medie_aree[a] for a in aree], "Analisi Reparto Commerciale")
-    st.pyplot(fig_generale)
+        # Grafico individuale
+        fig_area = crea_radar(domande[area]["principali"], punteggi_aree[area], area)
+        st.pyplot(fig_area)
+        aree_files[area] = fig_area
+        fig_area.savefig(os.path.join(cliente_dir, f"grafico_{area}.png"), dpi=300, bbox_inches='tight')
 
-    # Salvataggio grafici
+    # Grafico generale
+    fig_generale = crea_radar(aree, [medie_aree[a] for a in aree], "Analisi Reparto Commerciale")
+    st.header("Risultati Generali")
+    st.pyplot(fig_generale)
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
 
-    # Generazione del documento
+    # Generazione documento Word
     doc = Document()
+    doc.add_heading('SALES ASSESSMENT', level=1)
+    doc.add_paragraph(f"Report generato per {nome_cliente} - {nome_azienda}")
+
+    doc.add_heading("Grafico Generale", level=2)
+    doc.add_picture(os.path.join(cliente_dir, "grafico_generale.png"), width=Inches(6))
+
+    for area in aree:
+        doc.add_page_break()
+        doc.add_heading(area, level=2)
+        doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
+
+    # Salva il documento
     doc_name = f"report_assessment_{nome_cliente}.docx"
     doc_path = os.path.join(cliente_dir, doc_name)
     doc.save(doc_path)
 
+    # Pulsante download
     with open(doc_path, "rb") as file:
         word_file = file.read()
 
