@@ -246,10 +246,22 @@ if st.button("Genera Grafici"):
         doc.add_heading(area, level=2)
         doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
 
-    doc_name = f"report_assessment_{nome_cliente}.docx"
-    doc_path = os.path.join(cliente_dir, doc_name)
+    import re
 
-doc.save(doc_path)
+# Pulizia del nome_cliente
+doc_name = re.sub(r'[^\w\-_. ]', '_', f"report_assessment_{nome_cliente}.docx")
+doc_path = os.path.join(cliente_dir, doc_name)
+
+# Crea la cartella specifica se non esiste (ulteriore sicurezza)
+if not os.path.exists(cliente_dir):
+    os.makedirs(cliente_dir, exist_ok=True)
+
+# Salva il documento
+try:
+    doc.save(doc_path)
+except Exception as e:
+    st.error(f"Errore nel salvataggio del file Word: {e}")
+    st.stop()
 
 # Leggi il file Word in modalità binaria per il download
 with open(doc_path, "rb") as file:
