@@ -5,6 +5,7 @@ import os
 from docx import Document
 from docx.shared import Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+import re  # Import per la pulizia dei nomi
 
 # Mappatura dei valori per la scala 1-5
 scala_risposte = {
@@ -94,7 +95,9 @@ domande = {
 st.title("Assessment Reparto Commerciale")
 st.write("Compila le seguenti domande per ogni area, poi clicca su 'Genera Grafici' per visualizzare i risultati.")
 
+# Input utente con pulizia del nome cliente
 nome_cliente = st.text_input("Nome del Cliente:", "Francesco Ramundo")
+nome_cliente_pulito = re.sub(r'[^\w\-_. ]', '_', nome_cliente).strip()  # Pulizia del nome
 nome_azienda = st.text_input("Nome dell'Azienda:", "rarosrl.com")
 
 punteggi_aree = {}
@@ -169,15 +172,23 @@ if st.button("Genera Grafici"):
         st.pyplot(fig_area)
         aree_files[area] = fig_area
 
+    # Directory di base e specifica per il cliente
     base_dir = "Programma Test vendita"
-    cliente_dir = os.path.join(base_dir, nome_cliente)
+    cliente_dir = os.path.join(base_dir, nome_cliente_pulito)
 
-    # Crea la cartella base se non esiste
+    # Debug per directory
+    st.write(f"Debug - base_dir: {base_dir}")
+    st.write(f"Debug - cliente_dir: {cliente_dir}")
+
+    # Creazione delle directory
     if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
+        os.makedirs(base_dir, exist_ok=True)
 
-    # Crea la cartella specifica del cliente se non esiste
-    os.makedirs(cliente_dir, exist_ok=True)
+    try:
+        os.makedirs(cliente_dir, exist_ok=True)
+    except Exception as e:
+        st.error(f"Errore nella creazione della cartella cliente_dir: {e}")
+        st.stop()
 
     fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
     for area in aree:
@@ -185,7 +196,7 @@ if st.button("Genera Grafici"):
 
     doc = Document()
 
-    # Percorso assoluto del logo (assicurarsi che esista)
+    # Percorso assoluto del logo
     logo_path = "Logo-Sales-Flow-payoff.png"
 
     section = doc.sections[0]
@@ -199,7 +210,7 @@ if st.button("Genera Grafici"):
 
     p_cliente = doc.add_paragraph()
     p_cliente.add_run("Report Analitico del Test di Vendita di ").bold = False
-    run_cliente = p_cliente.add_run(nome_cliente)
+    run_cliente = p_cliente.add_run(nome_cliente_pulito)
     run_cliente.bold = False
 
     p_azienda = doc.add_paragraph()
@@ -209,11 +220,10 @@ if st.button("Genera Grafici"):
 
     doc.add_paragraph("Questo documento fornisce un'analisi dettagliata della struttura commerciale dell'azienda, evidenziando punti di forza e aree di miglioramento.")
 
-    # Nota modificata
     p_nota = doc.add_paragraph()
     run_nota = p_nota.add_run("Nota: ")
     run_nota.bold = True
-    run_nota.font.color.rgb = RGBColor(0xFF,0x00,0x00)
+    run_nota.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
     p_nota.add_run("Per garantire che il lavoro di ricerca venditori che svolgerà RecruitFlow funzioni e per garantire che il venditore trovato riesca ad effettuare il proprio lavoro in modo efficace è essenziale che le seguenti aree chiave raggiungano almeno l'85%:")
 
     doc.add_paragraph("- Visione e Strategia di Vendita")
@@ -235,25 +245,23 @@ if st.button("Genera Grafici"):
         doc.add_heading(area, level=2)
         doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
 
-    doc_name = f"report_assessment_{nome_cliente}.docx"
-    import streamlit as st
-from io import BytesIO
+    doc_name = f"report_assessment_{nome_cliente_pulito}.docx"
+    doc_path = os.path.join(cliente_dir, doc_name)
 
-# Salva il documento Word
-doc_name = f"report_assessment_{nome_cliente}.docx"
-doc_path = os.path.join(cliente_dir, doc_name)
-doc.save(doc_path)
+    try:
+        doc.save(doc_path)
+    except Exception as e:
+        st.error(f"Errore nel salvataggio del file Word: {e}")
+        st.stop()
 
-# Leggi il file Word in modalità binaria per il download
-with open(doc_path, "rb") as file:
-    word_file = file.read()
+    with open(doc_path, "rb") as file:
+        word_file = file.read()
 
-# Aggiungi il pulsante di download
-st.download_button(
-    label=":inbox_tray: Scarica il Report Word",
-    data=word_file,
-    file_name=doc_name,
-    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-)
+    st.download_button(
+        label=":inbox_tray: Scarica il Report Word",
+        data=word_file,
+        file_name=doc_name,
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
 
-st.success(f"Il report è stato generato con successo! Puoi scaricarlo usando il pulsante sopra.")
+    st.success(f"Il report è stato generato con successo! Puoi scaricarlo usando il pulsante sopra.")
