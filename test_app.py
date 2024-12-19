@@ -248,7 +248,7 @@ with open(doc_path, "rb") as file:
 
 # Aggiungi il pulsante di download
 st.download_button(
-    label=":inbox_tray: Scarica il Report Word",
+    label="📥 Scarica il Report Word",
     data=word_file,
     file_name=doc_name,
     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
