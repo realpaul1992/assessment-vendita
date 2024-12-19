@@ -170,28 +170,42 @@ if st.button("Genera Grafici"):
         aree_files[area] = fig_area
 
     base_dir = "Programma Test vendita"
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
+    try:
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
 
-    cliente_dir = os.path.join(base_dir, nome_cliente)
-    if not os.path.exists(cliente_dir):
-        os.makedirs(cliente_dir)
+        cliente_dir = os.path.join(base_dir, nome_cliente)
+        if not os.path.exists(cliente_dir):
+            os.makedirs(cliente_dir)
+    except Exception as e:
+        st.error(f"Errore nella creazione delle directory: {e}")
+        st.stop()
 
-    fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
-    for area in aree:
-        aree_files[area].savefig(os.path.join(cliente_dir, f"grafico_{area}.png"), dpi=300, bbox_inches='tight')
+    try:
+        fig_generale.savefig(os.path.join(cliente_dir, "grafico_generale.png"), dpi=300, bbox_inches='tight')
+        for area in aree:
+            fig_area = aree_files[area]
+            fig_area.savefig(os.path.join(cliente_dir, f"grafico_{area}.png"), dpi=300, bbox_inches='tight')
+    except Exception as e:
+        st.error(f"Errore nel salvataggio dei grafici: {e}")
+        st.stop()
 
     doc = Document()
 
     # Percorso assoluto del logo (assicurarsi che esista)
     logo_path = "Logo-Sales-Flow-payoff.png"
-
-    section = doc.sections[0]
-    header = section.header
-    header_par = header.paragraphs[0]
-    header_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = header_par.add_run()
-    r.add_picture(logo_path, width=Inches(1.5))
+    if not os.path.exists(logo_path):
+        st.error(f"Il file del logo non esiste nel percorso: {logo_path}")
+    else:
+        try:
+            section = doc.sections[0]
+            header = section.header
+            header_par = header.paragraphs[0]
+            header_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            r = header_par.add_run()
+            r.add_picture(logo_path, width=Inches(1.5))
+        except Exception as e:
+            st.error(f"Errore nell'aggiunta del logo al documento: {e}")
 
     doc.add_heading('SALES ASSESSMENT', level=1)
 
@@ -226,32 +240,42 @@ if st.button("Genera Grafici"):
 
     doc.add_page_break()
     doc.add_heading('Analisi Reparto Commerciale', level=2)
-    doc.add_picture(os.path.join(cliente_dir, "grafico_generale.png"), width=Inches(6))
+    try:
+        doc.add_picture(os.path.join(cliente_dir, "grafico_generale.png"), width=Inches(6))
+    except Exception as e:
+        st.error(f"Errore nell'aggiunta del grafico generale al documento: {e}")
 
     for area in aree:
         doc.add_page_break()
         doc.add_heading(area, level=2)
-        doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
+        try:
+            doc.add_picture(os.path.join(cliente_dir, f"grafico_{area}.png"), width=Inches(6))
+        except Exception as e:
+            st.error(f"Errore nell'aggiunta del grafico per l'area '{area}' al documento: {e}")
 
+    # Salva il documento Word
     doc_name = f"report_assessment_{nome_cliente}.docx"
-    import streamlit as st
-from io import BytesIO
+    doc_path = os.path.join(cliente_dir, doc_name)
+    try:
+        doc.save(doc_path)
+    except Exception as e:
+        st.error(f"Errore nel salvataggio del documento Word: {e}")
+        st.stop()
 
-# Salva il documento Word
-doc_name = f"report_assessment_{nome_cliente}.docx"
-doc_path = os.path.join(cliente_dir, doc_name)
-doc.save(doc_path)
+    # Leggi il file Word in modalità binaria per il download
+    try:
+        with open(doc_path, "rb") as file:
+            word_file = file.read()
+    except Exception as e:
+        st.error(f"Errore nella lettura del documento Word: {e}")
+        st.stop()
 
-# Leggi il file Word in modalità binaria per il download
-with open(doc_path, "rb") as file:
-    word_file = file.read()
+    # Aggiungi il pulsante di download
+    st.download_button(
+        label="📥 Scarica il Report Word",
+        data=word_file,
+        file_name=doc_name,
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
 
-# Aggiungi il pulsante di download
-st.download_button(
-    label="📥 Scarica il Report Word",
-    data=word_file,
-    file_name=doc_name,
-    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-)
-
-st.success(f"Il report è stato generato con successo! Puoi scaricarlo usando il pulsante sopra.")
+    st.success(f"Il report è stato generato con successo! Puoi scaricarlo usando il pulsante sopra.")
